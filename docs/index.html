@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<meta http-equiv="refresh" content="90"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="format-detection" content="telephone=no"/>
+<title>WRF Phase-1 status</title>
+<style>
+:root {
+  --bg:#f4f7fb; --card:#ffffff; --text:#1e293b; --muted:#64748b; --line:#e2e8f0;
+  --ok:#059669; --ok-bg:#ecfdf5; --run:#2563eb; --run-bg:#eff6ff;
+  --queue:#d97706; --queue-bg:#fffbeb; --part:#7c3aed; --part-bg:#f5f3ff;
+  --bar:#e2e8f0; --log-bg:#f8fafc; --warn:#b45309; --warn-bg:#fffbeb;
+}
+*, *::before, *::after { box-sizing:border-box; }
+html {
+  -webkit-text-size-adjust:100%;
+  overflow-x:hidden;
+}
+body {
+  margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+  background:
+    radial-gradient(900px 320px at 10% -10%, #dbeafe 0%, transparent 55%),
+    radial-gradient(700px 280px at 100% 0%, #d1fae5 0%, transparent 50%),
+    var(--bg);
+  color:var(--text); line-height:1.45;
+  min-height:100vh; min-height:100dvh;
+  overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+  touch-action:pan-y;
+  padding-bottom:calc(24px + env(safe-area-inset-bottom));
+}
+.page {
+  width:100%; max-width:720px; margin:0 auto;
+  padding:16px 14px 8px;
+  padding-left:max(14px, env(safe-area-inset-left));
+  padding-right:max(14px, env(safe-area-inset-right));
+}
+.badges { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
+.badge {
+  display:inline-block; font-size:0.68rem; font-weight:600; letter-spacing:0.06em;
+  text-transform:uppercase; color:#1d4ed8; background:#dbeafe;
+  padding:4px 10px; border-radius:999px;
+}
+.badge.ago { color:#047857; background:#d1fae5; }
+h1 {
+  margin:0; font-size:1.35rem; font-weight:700; letter-spacing:-0.02em;
+  background:linear-gradient(120deg,#0f172a 0%,#1d4ed8 55%,#059669 100%);
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+}
+.sub { color:var(--muted); font-size:0.8rem; margin-top:6px; }
+.stats {
+  display:grid; grid-template-columns:repeat(2,1fr); gap:8px;
+  margin:14px 0 16px;
+}
+.stat {
+  background:var(--card); padding:12px 10px; text-align:center;
+  border-radius:14px; border:1px solid var(--line);
+  box-shadow:0 1px 2px rgba(15,23,42,0.04);
+}
+.stat .n { font-size:1.35rem; font-weight:700; letter-spacing:-0.02em; }
+.stat .l {
+  font-size:0.65rem; color:var(--muted); margin-top:2px;
+  letter-spacing:0.05em; text-transform:uppercase; font-weight:600;
+}
+.stat.complete .n { color:var(--ok); }
+.stat.running .n { color:var(--run); }
+.stat.queued .n { color:var(--queue); }
+.stat.partial .n { color:var(--part); }
+.list { display:flex; flex-direction:column; gap:10px; }
+.member {
+  background:var(--card); border:1px solid var(--line); border-radius:16px;
+  box-shadow:0 1px 2px rgba(15,23,42,0.04), 0 8px 18px rgba(15,23,42,0.04);
+  overflow:hidden;
+}
+.member-btn {
+  display:block; width:100%; text-align:left; border:0; background:transparent;
+  padding:14px 14px 12px; cursor:pointer; color:inherit;
+  font:inherit; -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+}
+.member.open .member-btn { background:#f8fbff; }
+.member-top {
+  display:flex; align-items:center; gap:8px; margin-bottom:8px;
+  flex-wrap:wrap;
+}
+.chev {
+  flex:0 0 auto; color:var(--muted); font-size:0.7rem;
+  transition:transform 0.15s ease; width:1em;
+}
+.member.open .chev { transform:rotate(90deg); color:#2563eb; }
+.name {
+  flex:1 1 auto; min-width:0;
+  font-family:ui-monospace,Menlo,Consolas,monospace;
+  font-size:0.78rem; font-weight:600;
+  overflow-wrap:anywhere; word-break:break-word;
+}
+.ago-wrap {
+  flex:0 0 auto; white-space:nowrap;
+  font-size:0.72rem; font-weight:650; color:#047857;
+}
+.ago-wrap .rel-ago { color:#047857; }
+.pill {
+  flex:0 0 auto; font-size:0.68rem; font-weight:650; padding:4px 9px;
+  border-radius:999px; letter-spacing:0.02em; text-transform:capitalize;
+}
+.member.complete .pill { color:var(--ok); background:var(--ok-bg); }
+.member.running .pill { color:var(--run); background:var(--run-bg); }
+.member.queued .pill { color:var(--queue); background:var(--queue-bg); }
+.member.partial .pill, .member.pending .pill, .member.done_short .pill {
+  color:var(--part); background:var(--part-bg);
+}
+.member-meta {
+  display:flex; flex-wrap:wrap; gap:8px 12px; align-items:center;
+  font-size:0.75rem; margin-bottom:8px;
+}
+.muted { color:var(--muted); font-weight:500; }
+.num { font-variant-numeric:tabular-nums; font-weight:650; }
+.pct { color:var(--muted); font-variant-numeric:tabular-nums; }
+.bar {
+  height:8px; background:var(--bar); border-radius:999px; overflow:hidden;
+  width:100%; margin-bottom:8px;
+}
+.bar i { display:block; height:100%; border-radius:999px; background:#94a3b8; }
+.member.complete .bar i { background:linear-gradient(90deg,#34d399,#059669); }
+.member.running .bar i { background:linear-gradient(90deg,#60a5fa,#2563eb); }
+.member.queued .bar i { background:linear-gradient(90deg,#fbbf24,#d97706); }
+.member.partial .bar i, .member.pending .bar i, .member.done_short .bar i {
+  background:linear-gradient(90deg,#c4b5fd,#7c3aed);
+}
+.member-times {
+  display:flex; flex-direction:column; gap:3px;
+  font-family:ui-monospace,Menlo,Consolas,monospace;
+  font-size:0.68rem; color:var(--muted);
+}
+.member-times .k {
+  display:inline-block; min-width:2.2em; color:#94a3b8;
+  font-family:system-ui,sans-serif; font-weight:650; font-size:0.62rem;
+  text-transform:uppercase; letter-spacing:0.04em;
+}
+.tap-hint {
+  margin-top:8px; font-size:0.65rem; color:#94a3b8;
+  letter-spacing:0.02em;
+}
+.member.open .tap-hint { display:none; }
+.member-detail {
+  padding:0 12px 12px;
+}
+.member-detail[hidden] { display:none; }
+.log-panel {
+  border:1px solid var(--line); border-radius:12px; overflow:hidden;
+  background:#fff;
+}
+.log-head {
+  font-size:0.68rem; font-weight:650; letter-spacing:0.04em; text-transform:uppercase;
+  color:#1d4ed8; background:#eff6ff; padding:8px 12px; border-bottom:1px solid #dbeafe;
+}
+.log-meta {
+  font-size:0.74rem; color:var(--muted); padding:8px 12px;
+  background:#f8fafc; border-bottom:1px solid var(--line);
+}
+.log-meta strong { color:var(--text); font-weight:650; }
+.log-meta .rsl-ago { color:#047857; font-weight:650; }
+pre.log {
+  margin:0; padding:12px; max-height:min(40vh, 260px); overflow:auto;
+  -webkit-overflow-scrolling:touch; overscroll-behavior:contain;
+  background:var(--log-bg); color:#334155;
+  font-family:ui-monospace,Menlo,Consolas,monospace; font-size:0.7rem;
+  line-height:1.45; white-space:pre-wrap; word-break:break-word;
+}
+.log-warn {
+  margin:0; padding:14px 12px; color:var(--warn); background:var(--warn-bg);
+  font-size:0.78rem; font-weight:550;
+}
+footer {
+  color:var(--muted); font-size:0.72rem; padding:16px 4px 8px;
+}
+@media (min-width:640px) {
+  .stats { grid-template-columns:repeat(4,1fr); }
+  .page { padding:22px 20px 12px; }
+  h1 { font-size:1.45rem; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+<header>
+  <div class="badges">
+    <div class="badge">Live · Derecho</div>
+    <div class="badge ago" id="ago" data-ts="2026-10-21T14:46:01-06:00">Updated · just now</div>
+  </div>
+  <h1>WRF Hydro Phase-1</h1>
+  <div class="sub">Updated 2026-10-21 15:46:01 CDT · refreshes ~90s · tap a card for rsl</div>
+</header>
+<section class="stats">
+  <div class="stat complete"><div class="n">4</div><div class="l">Complete</div></div>
+  <div class="stat running"><div class="n">0</div><div class="l">Running</div></div>
+  <div class="stat queued"><div class="n">28</div><div class="l">Queued</div></div>
+  <div class="stat partial"><div class="n">0</div><div class="l">Partial</div></div>
+</section>
+<section class="list">
+  <article class='member queued' data-member='CU11_MP08_PBL01_URB2'><button type='button' class='member-btn' aria-expanded='false'><div class='member-top'><span class='chev' aria-hidden='true'>▸</span><span class='name'>CU11_MP08_PBL01_URB2</span><span class='ago-wrap'><span class='rel-ago' data-ts='2026-10-13T04:48:24-05:00'>—</span></span><span class='pill'>queued</span></div><div class='member-meta'><span class='num'>70/73</span><span class='pct'>96%</span></div><div class='bar'><i style='width:96%'></i></div><div class='member-times'><div><span class='k'>Sim</span> 2017-08-27_21:00:00</div><div><span class='k'>File</span> 2026-10-13 04:48:24 CDT</div></div><div class='tap-hint'>Tap for rsl.out.0000</div></button><div class='member-detail' hidden><div class='log-panel'><div class='log-head'>rsl.out.0000 · last 10 lines</div><div class='log-meta'>File last updated <strong>2026-10-13 04:48:54 CDT</strong> · <span class='rsl-ago' data-ts='2026-10-13T04:48:54-05:00'>—</span></div><pre class='log'>Timing for main: time 2017-08-27_21:01:30 on domain   1:    0.17598 elapsed seconds
+Timing for main: time 2017-08-27_21:02:00 on domain   1:    0.17702 elapsed seconds
+Timing for main: time 2017-08-27_21:02:30 on domain   1:    0.17755 elapsed seconds
+Timing for main: time 2017-08-27_21:03:00 on domain   1:    0.17666 elapsed seconds
+Timing for main: time 2017-08-27_21:03:30 on domain   1:    0.17630 elapsed seconds
+Timing for main: time 2017-08-27_21:04:00 on domain   1:    0.19716 elapsed seconds
+Timing for main: time 2017-08-27_21:04:30 on domain   1:    0.17498 elapsed seconds
+Timing for main: time 2017-08-27_21:05:00 on domain   1:    0.17478 elapsed seconds
+Timing for main: time 2017-08-27_21:05:30 on domain   1:    0.79347 elapsed seconds
+taskid: 0 hostname: dec1002</pre></div></div></article><article class='member queued' data-member='CU11_MP08_PBL01_URB2_LULC2001'><button type='button' class='member-btn' aria-expanded='false'><div class='member-top'><span class='chev' aria-hidden='true'>▸</span><span class='name'>CU11_MP08_PBL01_URB2_LULC2001</span><span class='ago-wrap'><span class='rel-ago' data-ts='2026-10-13T04:33:50-05:00'>—</span></span><span class='pill'>queued</span></div><div class='member-meta'><span class='num'>54/73</span><span class='pct'>74%</span></div><div class='bar'><i style='width:74%'></i></div><div class='member-times'><div><span class='k'>Sim</span> 2017-08-27_05:00:00</div><div><span class='k'>File</span> 2026-10-13 04:33:50 CDT</div></div><div class='tap-hint'>Tap for rsl.out.0000</div></button><div class='member-detail' hidden><div class='log-panel'><div class='log-head'>rsl.out.0000 · last 10 lines</div><div class='log-meta'>File last updated <strong>2026-10-13 04:34:23 CDT</strong> · <span class='rsl-ago' data-ts='2026-10-13T04:34:23-05:00'>—</span></div><pre class='log'>Timing for main: time 2017-08-27_05:14:00 on domain   1:    0.17130 elapsed seconds
+Timing for main: time 2017-08-27_05:14:30 on domain   1:    0.17146 elapsed seconds
+Timing for main: time 2017-08-27_05:15:00 on domain   1:    0.17072 elapsed seconds
+Timing for main: time 2017-08-27_05:15:30 on domain   1:    0.39656 elapsed seconds
+Timing for main: time 2017-08-27_05:16:00 on domain   1:    0.19421 elapsed seconds
+Timing for main: time 2017-08-27_05:16:30 on domain   1:    0.16955 elapsed seconds
+Timing for main: time 2017-08-27_05:17:00 on domain   1:    0.17177 elapsed seconds
+Timing for main: time 2017-08-27_05:17:30 on domain   1:    0.17093 elapsed seconds
+Timing for main: time 2017-08-27_05:18:00 on domain   1:    0.17055 elapsed seconds
+taskid: 0 hostname: dec2044</pre></div></div></article><article class='member queued' data-member='CU16_MP08_PBL01_URB2_LULC2001'><button type='button' class='member-btn' aria-expanded='false'><div class='member-top'><span class='chev' aria-hidden='true'>▸</span><span class='name'>CU16_MP08_PBL01_URB2_LULC2001</span><span class='ago-wrap'><span class='rel-ago' data-ts='2026-10-13T05:25:11-05:00'>—</span></span><span class='pill'>queued</span></div><div class='member-meta'><span class='num'>54/73</span><span class='pct'>74%</span></div><div class='bar'><i style='width:74%'></i></div><div class='member-times'><div><span class='k'>Sim</span> 2017-08-27_05:00:00</div><div><span class='k'>File</span> 2026-10-13 05:25:11 CDT</div></div><div class='tap-hint'>Tap for rsl.out.0000</div></button><div class='member-detail' hidden><div class='log-panel'><div class='log-head'>rsl.out.0000 · last 10 lines</div><div class='log-meta'>File last updated <strong>2026-10-13 05:25:58 CDT</strong> · <span class='rsl-ago' data-ts='2026-10-13T05:25:58-05:00'>—</span></div><pre class='log'>Timing for main: time 2017-08-27_05:51:00 on domain   1:    0.17255 elapsed seconds
+Timing for main: time 2017-08-27_05:51:30 on domain   1:    0.17302 elapsed seconds
+Timing for main: time 2017-08-27_05:52:00 on domain   1:    0.17851 elapsed seconds
+Timing for main: time 2017-08-27_05:52:30 on domain   1:    0.17243 elapsed seconds
+Timing for main: time 2017-08-27_05:53:00 on domain   1:    0.17137 elapsed seconds
+Timing for main: time 2017-08-27_05:53:30 on domain   1:    0.17115 elapsed seconds
+Timing for main: time 2017-08-27_05:54:00 on domain   1:    0.17244 elapsed seconds
+Timing for main: time 2017-08-27_05:54:30 on domain   1:    0.17177 elapsed seconds
+Timing for main: time 2017-08-27_05:55:00 on domain   1:    0.17048 elapsed seconds
+taskid: 0 hostname: dec2044</pre></div></div></article><article class='member queued' data-member='CU16_MP08_PBL01_URB2'><button type='button' class='member-btn' aria-expanded='false'><div class='member-top'><span class='chev' aria-hidden='true'>▸</span><span class='name'>CU16_MP08_PBL01_URB2</span><span class='ago-wrap'><span class='rel-ago' data-ts='2026-10-13T05:00:20-05:00'>—</span></span><span class='pill'>queued</span></div><div class='member-meta'><span class='num'>46/73</span><span class='pct'>63%</span></div><div class='bar'><i style='width:63%'></i></div><div class='member-times'><div><span class='k'>Sim</span> 2017-08-26_21:00:00</div><div><span class='k'>File</span> 2026-10-13 05:00:20 CDT</div></div><div class='tap-hint'>Tap for rsl.out.0000</div></button><div class='member-detail' hidden><div class='log-panel'><div class='log-head'>rsl.out.0000 · last 10 lines</div><div class='log-meta'>File last updated <strong>2026-10-13 05:01:05 CDT</strong> · <span class='rsl-ago' data-ts='2026-10-13T05:01:05-05:00'>—</span></div><pre class='log'>Timing for main: time 2017-08-26_21:35:00 on domain   1:    0.17294 elapsed seconds
+Timing for main: time 2017-08-26_21:35:30 on domain   1:    0.79636 elapsed seconds
+Timing for main: time 2017-08-26_21:36:00 on domain   1:    0.18207 elapsed seconds
+Timing for main: time 2017-08-26_21:36:30 on domain   1:    0.17271 elapsed seconds
+Timing for main: time 2017-08-26_21:37:00 on domain   1:    0.17276 elapsed seconds
+Timing for main: time 2017-08-26_21:37:30 on domain   1:    0.17360 elapsed seconds
+Timing for main: time 2017-08-26_21:38:00 on domain   1:    0.17310 elapsed seconds
+Timing for main: time 2017-08-26_21:38:30 on domain   1:    0.17307 elapsed seconds
+Timing for main: time 2017-08-26_21:39:00 on domain   1:    0.17348 elapsed seconds
+taskid: 0 hostname: dec1021</pre></div></div></article><article class='member queued' data-member='CU05_MP10_PBL01_URB2'><button type='button' class='member-btn' aria-expanded='false'><div class='member-top'><span class='chev' aria-hidden='true'>▸</span><span class='name'>CU05_MP10_PBL01_URB2</span><span class='ago-wrap'><span class='rel-ago' data-ts='2026-10-13T02:49:25-05:00'>—</span></span><span class='pill'>queued</span></div><div class='member-meta'><span class='num'>37/73</span><span class='pct'>51%</span></div><div class='bar'><i style='width:51%'></i></div><div class='member-times'><div><span class='k'>Sim</span> 2017-08-26_12:00:00</div><div><span class='k'>File</span> 2026-10-13 02:49:25 CDT</div></div><div class='tap-hint'>Tap for rsl.out.0000</div></button><div class='member-detail' hidden><div class='log-panel'><div class='log-head'>rsl.out.0000 · last 10 lines</div><div class='log-meta'>File last updated <strong>2026-10-13 02:49:54 CDT</strong> · <span class='rsl-ago' data-ts='2026-10-13T02:49:54-05:00'>—</span></div><pre class='log'>Timing for Writing wrfout_d01_2017-08-26_12:00:00 for domain        1:    5.28527 elapsed seconds
+Timing for Writing restart for domain        1:   26.75826 elapsed seconds
+d01 2017-08-26_12:00:00  Input data is acceptable to use: wrfbdy_d01
+Timing for processing lateral boundary for domain        1:    0.40466 elapsed seconds
+Timing for main: time 2017-08-26_12:00:30 on domain   1:   33.21099 elapsed seconds
+Timing for main: time 2017-08-26_12:01:00 on domain   1:    0.16645 elapsed seconds
+Timing for main: time 2017-08-26_12:01:30 on domain   1:    0.16837 elapsed seconds
+Timing for main: time 2017-08-26_12:02:00 on domain   1:    0.16773 elapsed seconds
+Timing for main: time 2017-08-26_12:02:30 on domain   1:    0.16657 elapsed seconds
+taskid: 0 hostname: dec0971</pre></div></div></article><article class='member queued' data-member='CU05_MP10_PBL01_URB2_LULC2001'><button type='button' class='member-btn' aria-expanded='false'><div class='member-top'><span class='chev' aria-hidden='true'>▸</span><span class='name'>CU05_MP10_PBL01_URB2_LULC2001</span><span class='ago-wrap'><span class='rel-ago' data-ts='2026-10-13T02:48:36-05:00'>—</span></span><span class='pill'>queued</span></div><div class='member-meta'><span class='num'>36/73</span><span class='pct'>49%</span></div><div class='bar'><i style='width:49%'></i></div><div class='member-times'><div><span class='k'>Sim</span> 2017-08-26_11:00:00</div><div><span class='k'>File</span> 2026-10-13 02:48:36 CDT</div></div><div class='tap-hint'>Tap for rsl.out.0000</div></button><div class='member-detail' hidden><div class='log-panel'><div class='log-head'>rsl.out.0000 · last 10 lines</div><div class='log-meta'>File last updated <strong>2026-10-13 02:49:09 CDT</strong> · <span class='rsl-ago' data-ts='2026-10-13T02:49:09-05:00'>—</span></div><pre class='log'>Timing for main: time 2017-08-26_11:11:00 on domain   1:    0.16519 elapsed seconds
+Timing for main: time 2017-08-26_11:11:30 on domain   1:    0.16334 elapsed seconds
+Timing for main: time 2017-08-26_11:12:00 on domain   1:    0.18248 elapsed seconds
+Timing for main: time 2017-08-26_11:12:30 on domain   1:    0.16422 elapsed seconds
+Timing for main: time 2017-08-26_11:13:00 on domain   1:    0.16409 elapsed seconds
+Timing for main: time 2017-08-26_11:13:30 on domain   1:    0.16350 elapsed seconds
+Timing for main: time 2017-08-26_11:14:00 on domain   1:    0.16391 elapsed seconds
+Timing for main: time 2017-08-26_11:14:30 on domain   1:    0.16299 elapsed seconds
+Timing for main: time 2017-08-26_11:15:00 on domain   1:    0.16444 elapsed seconds
+taskid: 0 hostname: dec1022</pre></div></div></article><article class='member queued' data-member='CU05_MP08_PBL02_URB2_LULC2001'><button type='button' class='member-btn' aria-expanded='false'><div class='member-top'><span class='chev' aria-hidden='true'>▸</span><span class='name'>CU05_MP08_PBL02_URB2_LULC2001</span><span class='ago-wrap'><span class='rel-ago' data-ts='2026-10-13T02:44:26-05:00'>—</span></span><span class='pill'>queued</span></div><div class='member-meta'><span class='num'>31/73</span><span class='pct'>42%</span></div><div class='bar'><i style='width:42%'></i></div><div class='member-times'><div><span class='k'>Sim</span> 2017-08-26_06:00:00</div><div><span class='k'>File</span> 2026-10-13 02:44:26 CDT</div></div><div class='tap-hint'>Tap for rsl.out.0000</div></button><div class='member-detail' hidden><div class='log-panel'><div class='log-head'>rsl.out.0000 · last 10 lines</div><div class='log-meta'>File last updated <strong>2026-10-13 14:15:29 CDT</strong> · <span class='rsl-ago' data-ts='2026-10-13T14:15:29-05:00'>—</span></div><pre class='log'>Timing for main: time 2017-08-26_06:07:00 on domain   1:    0.17049 elapsed seconds
+Timing for main: time 2017-08-26_06:07:30 on domain   1:    0.16923 elapsed seconds
+Timing for main: time 2017-08-26_06:08:00 on domain   1:    0.19150 elapsed seconds
+Timing for main: time 2017-08-26_06:08:30 on domain   1:    0.16984 elapsed seconds
+Timing for main: time 2017-08-26_06:09:00 on domain   1:    0.16885 elapsed seconds
+Timing for main: time 2017-08-26_06:09:30 on domain   1:    0.16990 elapsed seconds
+Timing for main: time 2017-08-26_06:10:00 on domain   1:    0.16972 elapsed seconds
+Timing for main: time 2017-08-26_06:10:30 on domain   1:    0.38357 elapsed seconds
+Timing for main: time 2017-08-26_06:11:00 on domain   1:    0.17557 elapsed seconds
+taskid: 0 hostname: dec0994</pre></div></div></article><article class='member queued' data-member='CU05_MP08_PBL02_URB2'><button type='button' class='member-btn' aria-expanded='false'><div class='member-top'><span class='chev' aria-hidden='true'>▸</span><span class='name'>CU05_MP08_PBL02_URB2</span><span class='ago-wrap'><span class='rel-ago' data-ts='2026-10-13T02:42:19-05:00'>—</span></span><span class='pill'>queued</span></div><div class='member-meta'><span class='num'>29/73</span><span class='pct'>40%</span></div><div class='bar'><i style='width:40%'></i></div><div class='member-times'><div><span class='k'>Sim</span> 2017-08-26_04:00:00</div><div><span class='k'>File</span> 2026-10-13 02:42:19 CDT</div></div><div class='tap-hint'>Tap for rsl.out.0000</div></button><div class='member-detail' hidden><div class='log-panel'><div class='log-head'>rsl.out.0000 · last 10 lines</div><div class='log-meta'>File last updated <strong>2026-10-13 14:15:34 CDT</strong> · <span class='rsl-ago' data-ts='2026-10-13T14:15:34-05:00'>—</span></div><pre class='log'>Timing for main: time 2017-08-26_04:51:00 on domain   1:    0.16954 elapsed seconds
+Timing for main: time 2017-08-26_04:51:30 on domain   1:    0.16916 elapsed seconds
+Timing for main: time 2017-08-26_04:52:00 on domain   1:    0.19081 elapsed seconds
+Timing for main: time 2017-08-26_04:52:30 on domain   1:    0.17031 elapsed seconds
+Timing for main: time 2017-08-26_04:53:00 on domain   1:    0.16937 elapsed seconds
+Timing for main: time 2017-08-26_04:53:30 on domain   1:    0.16976 elapsed seconds
+Timing for main: time 2017-08-26_04:54:00 on domain   1:    0.16965 elapsed seconds
+Timing for main: time 2017-08-26_04:54:30 on domain   1:    0.16914 elapsed seconds
+Timing for main: time 2017-08-26_04:55:00 on domain   1:    0.16999 elapsed seconds
+taskid: 0 hostname: dec2029</pre></div></div></article><article class='member queued' data-member='CU06_MP08_PBL02_URB2'><button type='button' class='member-btn' aria-expanded='false'><div class='member-top'><span class='chev' aria-hidden='true'>▸</span><span class='name'>CU06_MP08_PBL02_URB2</span><span class='ago-wrap'><span class='rel-ago' data-ts='2026-10-13T02:51:46-05:00'>—</span></span><span class='pill'>queued</span></div><div class='member-meta'><span class='num'>27/73</span><span class='pct'>37%</span></div><div class='bar'><i style='width:37%'></i></div><div class='member-times'><div><span class='k'>Sim</span> 2017-08-26_02:00:00</div><div><span class='k'>File</span> 2026-10-13 02:51:46 CDT</div></div><div class='tap-hint'>Tap for rsl.out.0000</div></button><div class='member-detail' hidden><div class='log-panel'><div class='log-head'>rsl.out.0000 · last 10 lines</div><div class='log-meta'>File last updated <strong>2026-10-13 14:27:11 CDT</strong> · <span class='rsl-ago' data-ts='2026-10-13T14:27:11-05:00'>—</span></div><pre class='log'>Timing for main: time 2017-08-26_02:28:30 on domain   1:    0.17097 elapsed seconds
+Timing for main: time 2017-08-26_02:29:00 on domain   1:    0.17213 elapsed seconds
+Timing for main: time 2017-08-26_02:29:30 on domain   1:    0.17140 elapsed seconds
+Timing for main: time 2017-08-26_02:30:00 on domain   1:    0.17123 elapsed seconds
+Timing for main: time 2017-08-26_02:30:30 on domain   1:    0.38245 elapsed seconds
+Timing for main: time 2017-08-26_02:31:00 on domain   1:    0.17210 elapsed seconds
+Timing for main: time 2017-08-26_02:31:30 on domain   1:    0.17147 elapsed seconds
+Timing for main: time 2017-08-26_02:32:00 on domain   1:    0.17383 elapsed seconds
+Timing for main: time 2017-08-26_02:32:30 on domain   1:    0.17159 elapsed seconds
+taskid: 0 hostname: dec1598</pre></div></div></article><article class='member queued' data-member='CU05_MP10_PBL02_URB2'><button type='button' class='member-btn' aria-expanded='false'><div class='member-top'><span class='chev' aria-hidden='true'>▸</span><span class='name'>CU05_MP10_PBL02_URB2</span><span class='ago-wrap'><span class='rel-ago' data-ts='2026-10-13T02:35:59-05:00'>—</span></span><span class='pill'>queued</span></div><div class='member-meta'><span class='num'>22/73</span><span class='pct'>30%</span></div><div class='bar'><i style='width:30%'></i></div><div class='member-times'><div><span class='k'>Sim</span> 2017-08-25_21:00:00</div><div><span class='k'>File</span> 2026-10-13 02:35:59 CDT</div></div><div class='tap-hint'>Tap for rsl.out.0000</div></button><div class='member-detail' hidden><div class='log-panel'><div class='log-head'>rsl.out.0000 · last 10 lines</div><div class='log-meta'>File last updated <strong>2026-10-13 02:36:45 CDT</strong> · <span class='rsl-ago' data-ts='2026-10-13T02:36:45-05:00'>—</span></div><pre class='log'>Timing for main: time 2017-08-25_21:36:00 on domain   1:    0.18880 elapsed seconds
+Timing for main: time 2017-08-25_21:36:30 on domain   1:    0.16464 elapsed seconds
+Timing for main: time 2017-08-25_21:37:00 on domain   1:    0.16474 elapsed seconds
+Timing for main: time 2017-08-25_21:37:30 on domain   1:    0.16387 elapsed seconds
+Timing for main: time 2017-08-25_21:38:00 on domain   1:    0.16408 elapsed seconds
+Timing for main: time 2017-08-25_21:38:30 on domain   1:    0.16267 elapsed seconds
+Timing for main: time 2017-08-25_21:39:00 on domain   1:    0.16288 elapsed seconds
+Timing for main: time 2017-08-25_21:39:30 on domain   1:    0.16499 elapsed seconds
+Timing for main: time 2017-08-25_21:40:00 on domain   1:    0.19008 elapsed seconds
+taskid: 0 hostname: dec1005</pre></div></div></article><article class='member queued' data-member='CU06_MP10_PBL01_URB2'><button type='button' class='member-btn' aria-expanded='false'><div class='member-top'><span class='chev' aria-hidden='true'>▸</span><span class='name'>CU06_MP10_PBL01_URB2</span><span class='ago-wrap'><span class='rel-ago' data-ts='2026-10-13T03:55:16-05:00'>—</span></span><span class='pill'>queued</span></div><div class='member-meta'><span class='num'>18/73</span><span class='pct'>25%</span></div><div class='bar'><i style='width:25%'></i></div><div class='member-times'><div><span class='k'>Sim</span> 2017-08-25_17:00:00</div><div><span class='k'>File</span> 2026-10-13 03:55:16 CDT</div></div><div class='tap-hint'>Tap for rsl.out.0000</div></button><div class='member-detail' hidden><div class='log-panel'><div class='log-head'>rsl.out.0000 · last 10 lines</div><div class='log-meta'>File last updated <strong>2026-10-13 03:55:55 CDT</strong> · <span class='rsl-ago' data-ts='2026-10-13T03:55:55-05:00'>—</span></div><pre class='log'>Timing for main: time 2017-08-25_17:25:30 on domain   1:    0.73208 elapsed seconds
+Timing for main: time 2017-08-25_17:26:00 on domain   1:    0.16059 elapsed seconds
+Timing for main: time 2017-08-25_17:26:30 on domain   1:    0.16203 elapsed seconds
+Timing for main: time 2017-08-25_17:27:00 on domain   1:    0.16324 elapsed seconds
+Timing for main: time 2017-08-25_17:27:30 on domain   1:    0.16286 elapsed seconds
+Timing for main: time 2017-08-25_17:28:00 on domain   1:    0.16593 elapsed seconds
+Timing for main: time 2017-08-25_17:28:30 on domain   1:    0.16265 elapsed seconds
+Timing for main: time 2017-08-25_17:29:00 on domain   1:    0.16195 elapsed seconds
+Timing for main: time 2017-08-25_17:29:30 on domain   1:    0.16111 elapsed seconds
+taskid: 0 hostname: dec1016</pre></div></div></article><article class='member queued' data-member='CU06_MP10_PBL01_URB2_LULC2001'><button type='button' class='member-btn' aria-expanded='false'><div class='member-top'><span class='chev' aria-hidden='true'>▸</span><span class='name'>CU06_MP10_PBL01_URB2_LULC2001</span><span class='ago-wrap'><span class='rel-ago' data-ts='2026-10-13T03:55:35-05:00'>—</span></span><span class='pill'>queued</span></div><div class='member-meta'><span class='num'>18/73</span><span class='pct'>25%</span></div><div class='bar'><i style='width:25%'></i></div><div class='member-times'><div><span class='k'>Sim</span> 2017-08-25_17:00:00</div><div><span class='k'>File</span> 2026-10-13 03:55:35 CDT</div></div><div class='tap-hint'>Tap for rsl.out.0000</div></button><div class='member-detail' hidden><div class='log-panel'><div class='log-head'>rsl.out.0000 · last 10 lines</div><div class='log-meta'>File last updated <strong>2026-10-13 03:56:20 CDT</strong> · <span class='rsl-ago' data-ts='2026-10-13T03:56:20-05:00'>—</span></div><pre class='log'>Timing for main: time 2017-08-25_17:39:30 on domain   1:    0.16122 elapsed seconds
+Timing for main: time 2017-08-25_17:40:00 on domain   1:    0.16595 elapsed seconds
+Timing for main: time 2017-08-25_17:40:30 on domain   1:    0.73678 elapsed seconds
+Timing for main: time 2017-08-25_17:41:00 on domain   1:    0.16080 elapsed seconds
+Timing for main: time 2017-08-25_17:41:30 on domain   1:    0.16132 elapsed seconds
+Timing for main: time 2017-08-25_17:42:00 on domain   1:    0.16204 elapsed seconds
+Timing for main: time 2017-08-25_17:42:30 on domain   1:    0.16129 elapsed seconds
+Timing for main: time 2017-08-25_17:43:00 on domain   1:    0.16226 elapsed seconds
+Timing for main: time 2017-08-25_17:43:30 on domain   1:    0.15984 elapsed seconds
+taskid: 0 hostname: dec2047</pre></div></div></article><article class='member queued' data-member='CU05_MP10_PBL02_URB2_LULC2001'><button type='button' class='member-btn' aria-expanded='false'><div class='member-top'><span class='chev' aria-hidden='true'>▸</span><span class='name'>CU05_MP10_PBL02_URB2_LULC2001</span><span class='ago-wrap'><span class='rel-ago' data-ts='2026-10-13T02:31:01-05:00'>—</span></span><span class='pill'>queued</span></div><div class='member-meta'><span class='num'>17/73</span><span class='pct'>23%</span></div><div class='bar'><i style='width:23%'></i></div><div class='member-times'><div><span class='k'>Sim</span> 2017-08-25_16:00:00</div><div><span class='k'>File</span> 2026-10-13 02:31:01 CDT</div></div><div class='tap-hint'>Tap for rsl.out.0000</div></button><div class='member-detail' hidden><div class='log-panel'><div class='log-head'>rsl.out.0000 · last 10 lines</div><div class='log-meta'>File last updated <strong>2026-10-13 02:31:49 CDT</strong> · <span class='rsl-ago' data-ts='2026-10-13T02:31:49-05:00'>—</span></div><pre class='log'>Timing for main: time 2017-08-25_16:41:00 on domain   1:    0.16118 elapsed seconds
+Timing for main: time 2017-08-25_16:41:30 on domain   1:    0.16275 elapsed seconds
+Timing for main: time 2017-08-25_16:42:00 on domain   1:    0.16162 elapsed seconds
+Timing for main: time 2017-08-25_16:42:30 on domain   1:    0.16284 elapsed seconds
+Timing for main: time 2017-08-25_16:43:00 on domain   1:    0.16245 elapsed seconds
+Timing for main: time 2017-08-25_16:43:30 on domain   1:    0.16233 elapsed seconds
+Timing for main: time 2017-08-25_16:44:00 on domain   1:    0.18851 elapsed seconds
+Timing for main: time 2017-08-25_16:44:30 on domain   1:    0.16246 elapsed seconds
+Timing for main: time 2017-08-25_16:45:00 on domain   1:    0.16104 elapsed seconds
+taskid: 0 hostname: dec2021</pre></div></div></article><article class='member queued' data-member='CU06_MP08_PBL02_URB2_LULC2001'><button type='button' class='member-btn' aria-expanded='false'><div class='member-top'><span class='chev' aria-hidden='true'>▸</span><span class='name'>CU06_MP08_PBL02_URB2_LULC2001</span><span class='ago-wrap'><span class='rel-ago' data-ts='2026-10-13T02:39:17-05:00'>—</span></span><span class='pill'>queued</span></div><div class='member-meta'><span class='num'>14/73</span><span class='pct'>19%</span></div><div class='bar'><i style='width:19%'></i></div><div class='member-times'><div><span class='k'>Sim</span> 2017-08-25_13:00:00</div><div><span class='k'>File</span> 2026-10-13 02:39:17 CDT</div></div><div class='tap-hint'>Tap for rsl.out.0000</div></button><div class='member-detail' hidden><div class='log-panel'><div class='log-head'>rsl.out.0000 · last 10 lines</div><div class='log-meta'>File last updated <strong>2026-10-13 02:39:49 CDT</strong> · <span class='rsl-ago' data-ts='2026-10-13T02:39:49-05:00'>—</span></div><pre class='log'>Timing for main: time 2017-08-25_13:07:00 on domain   1:    0.17127 elapsed seconds
+Timing for main: time 2017-08-25_13:07:30 on domain   1:    0.17183 elapsed seconds
+Timing for main: time 2017-08-25_13:08:00 on domain   1:    0.17451 elapsed seconds
+Timing for main: time 2017-08-25_13:08:30 on domain   1:    0.17107 elapsed seconds
+Timing for main: time 2017-08-25_13:09:00 on domain   1:    0.17131 elapsed seconds
+Timing for main: time 2017-08-25_13:09:30 on domain   1:    0.17115 elapsed seconds
+Timing for main: time 2017-08-25_13:10:00 on domain   1:    0.17157 elapsed seconds
+Timing for main: time 2017-08-25_13:10:30 on domain   1:    0.77651 elapsed seconds
+Timing for main: time 2017-08-25_13:11:00 on domain   1:    0.17145 elapsed seconds
+taskid: 0 hostname: dec2024</pre></div></div></article><article class='member queued' data-member='CU16_MP08_PBL02_URB2'><button type='button' class='member-btn' aria-expanded='false'><div class='member-top'><span class='chev' aria-hidden='true'>▸</span><span class='name'>CU16_MP08_PBL02_URB2</span><span class='ago-wrap'><span class='rel-ago' data-ts='2026-10-13T04:54:23-05:00'>—</span></span><span class='pill'>queued</span></div><div class='member-meta'><span class='num'>5/73</span><span class='pct'>7%</span></div><div class='bar'><i style='width:7%'></i></div><div class='member-times'><div><span class='k'>Sim</span> 2017-08-25_04:00:00</div><div><span class='k'>File</span> 2026-10-13 04:54:23 CDT</div></div><div class='tap-hint'>Tap for rsl.out.0000</div></button><div class='member-detail' hidden><div class='log-panel'><div class='log-head'>rsl.out.0000 · last 10 lines</div><div class='log-meta'>File last updated <strong>2026-10-13 04:55:00 CDT</strong> · <span class='rsl-ago' data-ts='2026-10-13T04:55:00-05:00'>—</span></div><pre class='log'>Timing for main: time 2017-08-25_04:25:00 on domain   1:    0.17253 elapsed seconds
+Timing for main: time 2017-08-25_04:25:30 on domain   1:    0.39489 elapsed seconds
+Timing for main: time 2017-08-25_04:26:00 on domain   1:    0.17316 elapsed seconds
+Timing for main: time 2017-08-25_04:26:30 on domain   1:    0.17297 elapsed seconds
+Timing for main: time 2017-08-25_04:27:00 on domain   1:    0.17258 elapsed seconds
+Timing for main: time 2017-08-25_04:27:30 on domain   1:    0.17286 elapsed seconds
+Timing for main: time 2017-08-25_04:28:00 on domain   1:    0.18076 elapsed seconds
+Timing for main: time 2017-08-25_04:28:30 on domain   1:    0.17324 elapsed seconds
+Timing for main: time 2017-08-25_04:29:00 on domain   1:    0.17297 elapsed seconds
+taskid: 0 hostname: dec2048</pre></div></div></article><article class='member queued' data-member='CU16_MP08_PBL02_URB2_LULC2001'><button type='button' class='member-btn' aria-expanded='false'><div class='member-top'><span class='chev' aria-hidden='true'>▸</span><span class='name'>CU16_MP08_PBL02_URB2_LULC2001</span><span class='ago-wrap'><span class='rel-ago' data-ts='2026-10-13T04:55:31-05:00'>—</span></span><span class='pill'>queued</span></div><div class='member-meta'><span class='num'>5/73</span><span class='pct'>7%</span></div><div class='bar'><i style='width:7%'></i></div><div class='member-times'><div><span class='k'>Sim</span> 2017-08-25_04:00:00</div><div><span class='k'>File</span> 2026-10-13 04:55:31 CDT</div></div><div class='tap-hint'>Tap for rsl.out.0000</div></button><div class='member-detail' hidden><div class='log-panel'><div class='log-head'>rsl.out.0000 · last 10 lines</div><div class='log-meta'>File last updated <strong>2026-10-13 04:56:08 CDT</strong> · <span class='rsl-ago' data-ts='2026-10-13T04:56:08-05:00'>—</span></div><pre class='log'>Timing for main: time 2017-08-25_04:25:30 on domain   1:    0.39588 elapsed seconds
+Timing for main: time 2017-08-25_04:26:00 on domain   1:    0.17346 elapsed seconds
+Timing for main: time 2017-08-25_04:26:30 on domain   1:    0.17307 elapsed seconds
+Timing for main: time 2017-08-25_04:27:00 on domain   1:    0.17322 elapsed seconds
+Timing for main: time 2017-08-25_04:27:30 on domain   1:    0.17347 elapsed seconds
+Timing for main: time 2017-08-25_04:28:00 on domain   1:    0.18118 elapsed seconds
+Timing for main: time 2017-08-25_04:28:30 on domain   1:    0.17337 elapsed seconds
+Timing for main: time 2017-08-25_04:29:00 on domain   1:    0.17356 elapsed seconds
+Timing for main: time 2017-08-25_04:29:30 on domain   1:    0.17384 elapsed seconds
+taskid: 0 hostname: dec0982</pre></div></div></article><article class='member queued' data-member='CU06_MP10_PBL02_URB2'><button type='button' class='member-btn' aria-expanded='false'><div class='member-top'><span class='chev' aria-hidden='true'>▸</span><span class='name'>CU06_MP10_PBL02_URB2</span><span class='ago-wrap'><span class='rel-ago' data-ts='2026-10-13T03:41:30-05:00'>—</span></span><span class='pill'>queued</span></div><div class='member-meta'><span class='num'>2/73</span><span class='pct'>3%</span></div><div class='bar'><i style='width:3%'></i></div><div class='member-times'><div><span class='k'>Sim</span> 2017-08-25_01:00:00</div><div><span class='k'>File</span> 2026-10-13 03:41:30 CDT</div></div><div class='tap-hint'>Tap for rsl.out.0000</div></button><div class='member-detail' hidden><div class='log-panel'><div class='log-head'>rsl.out.0000 · last 10 lines</div><div class='log-meta'>File last updated <strong>2026-10-13 03:42:06 CDT</strong> · <span class='rsl-ago' data-ts='2026-10-13T03:42:06-05:00'>—</span></div><pre class='log'>Timing for main: time 2017-08-25_01:26:00 on domain   1:    0.16170 elapsed seconds
+Timing for main: time 2017-08-25_01:26:30 on domain   1:    0.16094 elapsed seconds
+Timing for main: time 2017-08-25_01:27:00 on domain   1:    0.16166 elapsed seconds
+Timing for main: time 2017-08-25_01:27:30 on domain   1:    0.16067 elapsed seconds
+Timing for main: time 2017-08-25_01:28:00 on domain   1:    0.16397 elapsed seconds
+Timing for main: time 2017-08-25_01:28:30 on domain   1:    0.16093 elapsed seconds
+Timing for main: time 2017-08-25_01:29:00 on domain   1:    0.16154 elapsed seconds
+Timing for main: time 2017-08-25_01:29:30 on domain   1:    0.16153 elapsed seconds
+Timing for main: time 2017-08-25_01:30:00 on domain   1:    0.15989 elapsed seconds
+taskid: 0 hostname: dec1002</pre></div></div></article><article class='member queued' data-member='CU06_MP10_PBL02_URB2_LULC2001'><button type='button' class='member-btn' aria-expanded='false'><div class='member-top'><span class='chev' aria-hidden='true'>▸</span><span class='name'>CU06_MP10_PBL02_URB2_LULC2001</span><span class='ago-wrap'><span class='rel-ago' data-ts='2026-10-13T03:41:45-05:00'>—</span></span><span class='pill'>queued</span></div><div class='member-meta'><span class='num'>2/73</span><span class='pct'>3%</span></div><div class='bar'><i style='width:3%'></i></div><div class='member-times'><div><span class='k'>Sim</span> 2017-08-25_01:00:00</div><div><span class='k'>File</span> 2026-10-13 03:41:45 CDT</div></div><div class='tap-hint'>Tap for rsl.out.0000</div></button><div class='member-detail' hidden><div class='log-panel'><div class='log-head'>rsl.out.0000 · last 10 lines</div><div class='log-meta'>File last updated <strong>2026-10-13 03:42:21 CDT</strong> · <span class='rsl-ago' data-ts='2026-10-13T03:42:21-05:00'>—</span></div><pre class='log'>Timing for main: time 2017-08-25_01:26:00 on domain   1:    0.16073 elapsed seconds
+Timing for main: time 2017-08-25_01:26:30 on domain   1:    0.16113 elapsed seconds
+Timing for main: time 2017-08-25_01:27:00 on domain   1:    0.16096 elapsed seconds
+Timing for main: time 2017-08-25_01:27:30 on domain   1:    0.16131 elapsed seconds
+Timing for main: time 2017-08-25_01:28:00 on domain   1:    0.16465 elapsed seconds
+Timing for main: time 2017-08-25_01:28:30 on domain   1:    0.16060 elapsed seconds
+Timing for main: time 2017-08-25_01:29:00 on domain   1:    0.15975 elapsed seconds
+Timing for main: time 2017-08-25_01:29:30 on domain   1:    0.16187 elapsed seconds
+Timing for main: time 2017-08-25_01:30:00 on domain   1:    0.16090 elapsed seconds
+taskid: 0 hostname: dec2044</pre></div></div></article><article class='member queued' data-member='CU11_MP08_PBL02_URB2'><button type='button' class='member-btn' aria-expanded='false'><div class='member-top'><span class='chev' aria-hidden='true'>▸</span><span class='name'>CU11_MP08_PBL02_URB2</span><span class='ago-wrap'><span class='rel-ago' data-ts='2026-10-13T03:59:13-05:00'>—</span></span><span class='pill'>queued</span></div><div class='member-meta'><span class='num'>2/73</span><span class='pct'>3%</span></div><div class='bar'><i style='width:3%'></i></div><div class='member-times'><div><span class='k'>Sim</span> 2017-08-25_01:00:00</div><div><span class='k'>File</span> 2026-10-13 03:59:13 CDT</div></div><div class='tap-hint'>Tap for rsl.out.0000</div></button><div class='member-detail' hidden><div class='log-panel'><div class='log-head'>rsl.out.0000 · last 10 lines</div><div class='log-meta'>File last updated <strong>2026-10-13 03:59:50 CDT</strong> · <span class='rsl-ago' data-ts='2026-10-13T03:59:50-05:00'>—</span></div><pre class='log'>Timing for main: time 2017-08-25_01:26:00 on domain   1:    0.17042 elapsed seconds
+Timing for main: time 2017-08-25_01:26:30 on domain   1:    0.17131 elapsed seconds
+Timing for main: time 2017-08-25_01:27:00 on domain   1:    0.17027 elapsed seconds
+Timing for main: time 2017-08-25_01:27:30 on domain   1:    0.16975 elapsed seconds
+Timing for main: time 2017-08-25_01:28:00 on domain   1:    0.18367 elapsed seconds
+Timing for main: time 2017-08-25_01:28:30 on domain   1:    0.16363 elapsed seconds
+Timing for main: time 2017-08-25_01:29:00 on domain   1:    0.15915 elapsed seconds
+Timing for main: time 2017-08-25_01:29:30 on domain   1:    0.15842 elapsed seconds
+Timing for main: time 2017-08-25_01:30:00 on domain   1:    0.15827 elapsed seconds
+taskid: 0 hostname: dec1016</pre></div></div></article><article class='member queued' data-member='CU11_MP08_PBL02_URB2_LULC2001'><button type='button' class='member-btn' aria-expanded='false'><div class='member-top'><span class='chev' aria-hidden='true'>▸</span><span class='name'>CU11_MP08_PBL02_URB2_LULC2001</span><span class='ago-wrap'><span class='rel-ago' data-ts='2026-10-13T04:01:57-05:00'>—</span></span><span class='pill'>queued</span></div><div class='member-meta'><span class='num'>2/73</span><span class='pct'>3%</span></div><div class='bar'><i style='width:3%'></i></div><div class='member-times'><div><span class='k'>Sim</span> 2017-08-25_01:00:00</div><div><span class='k'>File</span> 2026-10-13 04:01:57 CDT</div></div><div class='tap-hint'>Tap for rsl.out.0000</div></button><div class='member-detail' hidden><div class='log-panel'><div class='log-head'>rsl.out.0000 · last 10 lines</div><div class='log-meta'>File last updated <strong>2026-10-13 04:02:34 CDT</strong> · <span class='rsl-ago' data-ts='2026-10-13T04:02:34-05:00'>—</span></div><pre class='log'>Timing for main: time 2017-08-25_01:26:00 on domain   1:    0.16907 elapsed seconds
+Timing for main: time 2017-08-25_01:26:30 on domain   1:    0.16922 elapsed seconds
+Timing for main: time 2017-08-25_01:27:00 on domain   1:    0.17141 elapsed seconds
+Timing for main: time 2017-08-25_01:27:30 on domain   1:    0.17026 elapsed seconds
+Timing for main: time 2017-08-25_01:28:00 on domain   1:    0.18345 elapsed seconds
+Timing for main: time 2017-08-25_01:28:30 on domain   1:    0.16249 elapsed seconds
+Timing for main: time 2017-08-25_01:29:00 on domain   1:    0.15943 elapsed seconds
+Timing for main: time 2017-08-25_01:29:30 on domain   1:    0.15791 elapsed seconds
+Timing for main: time 2017-08-25_01:30:00 on domain   1:    0.15898 elapsed seconds
+taskid: 0 hostname: dec1016</pre></div></div></article><article class='member queued' data-member='CU11_MP10_PBL01_URB2'><button type='button' class='member-btn' aria-expanded='false'><div class='member-top'><span class='chev' aria-hidden='true'>▸</span><span class='name'>CU11_MP10_PBL01_URB2</span><span class='ago-wrap'><span class='rel-ago' data-ts='2026-10-13T04:04:21-05:00'>—</span></span><span class='pill'>queued</span></div><div class='member-meta'><span class='num'>2/73</span><span class='pct'>3%</span></div><div class='bar'><i style='width:3%'></i></div><div class='member-times'><div><span class='k'>Sim</span> 2017-08-25_01:00:00</div><div><span class='k'>File</span> 2026-10-13 04:04:21 CDT</div></div><div class='tap-hint'>Tap for rsl.out.0000</div></button><div class='member-detail' hidden><div class='log-panel'><div class='log-head'>rsl.out.0000 · last 10 lines</div><div class='log-meta'>File last updated <strong>2026-10-13 04:04:57 CDT</strong> · <span class='rsl-ago' data-ts='2026-10-13T04:04:57-05:00'>—</span></div><pre class='log'>Timing for main: time 2017-08-25_01:25:00 on domain   1:    0.16113 elapsed seconds
+Timing for main: time 2017-08-25_01:25:30 on domain   1:    0.37775 elapsed seconds
+Timing for main: time 2017-08-25_01:26:00 on domain   1:    0.16069 elapsed seconds
+Timing for main: time 2017-08-25_01:26:30 on domain   1:    0.16095 elapsed seconds
+Timing for main: time 2017-08-25_01:27:00 on domain   1:    0.16138 elapsed seconds
+Timing for main: time 2017-08-25_01:27:30 on domain   1:    0.16072 elapsed seconds
+Timing for main: time 2017-08-25_01:28:00 on domain   1:    0.17851 elapsed seconds
+Timing for main: time 2017-08-25_01:28:30 on domain   1:    0.16085 elapsed seconds
+Timing for main: time 2017-08-25_01:29:00 on domain   1:    0.15808 elapsed seconds
+taskid: 0 hostname: dec1016</pre></div></div></article><article class='member queued' data-member='CU11_MP10_PBL01_URB2_LULC2001'><button type='button' class='member-btn' aria-expanded='false'><div class='member-top'><span class='chev' aria-hidden='true'>▸</span><span class='name'>CU11_MP10_PBL01_URB2_LULC2001</span><span class='ago-wrap'><span class='rel-ago' data-ts='2026-10-13T04:06:43-05:00'>—</span></span><span class='pill'>queued</span></div><div class='member-meta'><span class='num'>2/73</span><span class='pct'>3%</span></div><div class='bar'><i style='width:3%'></i></div><div class='member-times'><div><span class='k'>Sim</span> 2017-08-25_01:00:00</div><div><span class='k'>File</span> 2026-10-13 04:06:43 CDT</div></div><div class='tap-hint'>Tap for rsl.out.0000</div></button><div class='member-detail' hidden><div class='log-panel'><div class='log-head'>rsl.out.0000 · last 10 lines</div><div class='log-meta'>File last updated <strong>2026-10-13 04:07:19 CDT</strong> · <span class='rsl-ago' data-ts='2026-10-13T04:07:19-05:00'>—</span></div><pre class='log'>Timing for main: time 2017-08-25_01:25:00 on domain   1:    0.15992 elapsed seconds
+Timing for main: time 2017-08-25_01:25:30 on domain   1:    0.37853 elapsed seconds
+Timing for main: time 2017-08-25_01:26:00 on domain   1:    0.16046 elapsed seconds
+Timing for main: time 2017-08-25_01:26:30 on domain   1:    0.16049 elapsed seconds
+Timing for main: time 2017-08-25_01:27:00 on domain   1:    0.16090 elapsed seconds
+Timing for main: time 2017-08-25_01:27:30 on domain   1:    0.16017 elapsed seconds
+Timing for main: time 2017-08-25_01:28:00 on domain   1:    0.17914 elapsed seconds
+Timing for main: time 2017-08-25_01:28:30 on domain   1:    0.16072 elapsed seconds
+Timing for main: time 2017-08-25_01:29:00 on domain   1:    0.15743 elapsed seconds
+taskid: 0 hostname: dec1016</pre></div></div></article><article class='member queued' data-member='CU11_MP10_PBL02_URB2'><button type='button' class='member-btn' aria-expanded='false'><div class='member-top'><span class='chev' aria-hidden='true'>▸</span><span class='name'>CU11_MP10_PBL02_URB2</span><span class='ago-wrap'><span class='rel-ago' data-ts='2026-10-13T04:13:14-05:00'>—</span></span><span class='pill'>queued</span></div><div class='member-meta'><span class='num'>2/73</span><span class='pct'>3%</span></div><div class='bar'><i style='width:3%'></i></div><div class='member-times'><div><span class='k'>Sim</span> 2017-08-25_01:00:00</div><div><span class='k'>File</span> 2026-10-13 04:13:14 CDT</div></div><div class='tap-hint'>Tap for rsl.out.0000</div></button><div class='member-detail' hidden><div class='log-panel'><div class='log-head'>rsl.out.0000 · last 10 lines</div><div class='log-meta'>File last updated <strong>2026-10-13 04:13:45 CDT</strong> · <span class='rsl-ago' data-ts='2026-10-13T04:13:45-05:00'>—</span></div><pre class='log'>Timing for main: time 2017-08-25_01:11:00 on domain   1:    0.16244 elapsed seconds
+Timing for main: time 2017-08-25_01:11:30 on domain   1:    0.16312 elapsed seconds
+Timing for main: time 2017-08-25_01:12:00 on domain   1:    0.18025 elapsed seconds
+Timing for main: time 2017-08-25_01:12:30 on domain   1:    0.16135 elapsed seconds
+Timing for main: time 2017-08-25_01:13:00 on domain   1:    0.16049 elapsed seconds
+Timing for main: time 2017-08-25_01:13:30 on domain   1:    0.16189 elapsed seconds
+Timing for main: time 2017-08-25_01:14:00 on domain   1:    0.16332 elapsed seconds
+Timing for main: time 2017-08-25_01:14:30 on domain   1:    0.16149 elapsed seconds
+Timing for main: time 2017-08-25_01:15:00 on domain   1:    0.16304 elapsed seconds
+taskid: 0 hostname: dec2020</pre></div></div></article><article class='member queued' data-member='CU11_MP10_PBL02_URB2_LULC2001'><button type='button' class='member-btn' aria-expanded='false'><div class='member-top'><span class='chev' aria-hidden='true'>▸</span><span class='name'>CU11_MP10_PBL02_URB2_LULC2001</span><span class='ago-wrap'><span class='rel-ago' data-ts='2026-10-13T04:16:41-05:00'>—</span></span><span class='pill'>queued</span></div><div class='member-meta'><span class='num'>2/73</span><span class='pct'>3%</span></div><div class='bar'><i style='width:3%'></i></div><div class='member-times'><div><span class='k'>Sim</span> 2017-08-25_01:00:00</div><div><span class='k'>File</span> 2026-10-13 04:16:41 CDT</div></div><div class='tap-hint'>Tap for rsl.out.0000</div></button><div class='member-detail' hidden><div class='log-panel'><div class='log-head'>rsl.out.0000 · last 10 lines</div><div class='log-meta'>File last updated <strong>2026-10-13 04:17:12 CDT</strong> · <span class='rsl-ago' data-ts='2026-10-13T04:17:12-05:00'>—</span></div><pre class='log'>Timing for main: time 2017-08-25_01:11:00 on domain   1:    0.16158 elapsed seconds
+Timing for main: time 2017-08-25_01:11:30 on domain   1:    0.16299 elapsed seconds
+Timing for main: time 2017-08-25_01:12:00 on domain   1:    0.18105 elapsed seconds
+Timing for main: time 2017-08-25_01:12:30 on domain   1:    0.16107 elapsed seconds
+Timing for main: time 2017-08-25_01:13:00 on domain   1:    0.16233 elapsed seconds
+Timing for main: time 2017-08-25_01:13:30 on domain   1:    0.16164 elapsed seconds
+Timing for main: time 2017-08-25_01:14:00 on domain   1:    0.16169 elapsed seconds
+Timing for main: time 2017-08-25_01:14:30 on domain   1:    0.16222 elapsed seconds
+Timing for main: time 2017-08-25_01:15:00 on domain   1:    0.16252 elapsed seconds
+taskid: 0 hostname: dec1021</pre></div></div></article><article class='member queued' data-member='CU16_MP10_PBL01_URB2'><button type='button' class='member-btn' aria-expanded='false'><div class='member-top'><span class='chev' aria-hidden='true'>▸</span><span class='name'>CU16_MP10_PBL01_URB2</span><span class='ago-wrap'><span class='rel-ago' data-ts='2026-10-13T04:57:30-05:00'>—</span></span><span class='pill'>queued</span></div><div class='member-meta'><span class='num'>2/73</span><span class='pct'>3%</span></div><div class='bar'><i style='width:3%'></i></div><div class='member-times'><div><span class='k'>Sim</span> 2017-08-25_01:00:00</div><div><span class='k'>File</span> 2026-10-13 04:57:30 CDT</div></div><div class='tap-hint'>Tap for rsl.out.0000</div></button><div class='member-detail' hidden><div class='log-panel'><div class='log-head'>rsl.out.0000 · last 10 lines</div><div class='log-meta'>File last updated <strong>2026-10-13 04:58:07 CDT</strong> · <span class='rsl-ago' data-ts='2026-10-13T04:58:07-05:00'>—</span></div><pre class='log'>Timing for main: time 2017-08-25_01:28:00 on domain   1:    0.16951 elapsed seconds
+Timing for main: time 2017-08-25_01:28:30 on domain   1:    0.16127 elapsed seconds
+Timing for main: time 2017-08-25_01:29:00 on domain   1:    0.16061 elapsed seconds
+Timing for main: time 2017-08-25_01:29:30 on domain   1:    0.16137 elapsed seconds
+Timing for main: time 2017-08-25_01:30:00 on domain   1:    0.16135 elapsed seconds
+Timing for main: time 2017-08-25_01:30:30 on domain   1:    0.36907 elapsed seconds
+Timing for main: time 2017-08-25_01:31:00 on domain   1:    0.16072 elapsed seconds
+Timing for main: time 2017-08-25_01:31:30 on domain   1:    0.16132 elapsed seconds
+Timing for main: time 2017-08-25_01:32:00 on domain   1:    0.16707 elapsed seconds
+taskid: 0 hostname: dec2048</pre></div></div></article><article class='member queued' data-member='CU16_MP10_PBL01_URB2_LULC2001'><button type='button' class='member-btn' aria-expanded='false'><div class='member-top'><span class='chev' aria-hidden='true'>▸</span><span class='name'>CU16_MP10_PBL01_URB2_LULC2001</span><span class='ago-wrap'><span class='rel-ago' data-ts='2026-10-13T04:57:55-05:00'>—</span></span><span class='pill'>queued</span></div><div class='member-meta'><span class='num'>2/73</span><span class='pct'>3%</span></div><div class='bar'><i style='width:3%'></i></div><div class='member-times'><div><span class='k'>Sim</span> 2017-08-25_01:00:00</div><div><span class='k'>File</span> 2026-10-13 04:57:55 CDT</div></div><div class='tap-hint'>Tap for rsl.out.0000</div></button><div class='member-detail' hidden><div class='log-panel'><div class='log-head'>rsl.out.0000 · last 10 lines</div><div class='log-meta'>File last updated <strong>2026-10-13 04:58:33 CDT</strong> · <span class='rsl-ago' data-ts='2026-10-13T04:58:33-05:00'>—</span></div><pre class='log'>Timing for main: time 2017-08-25_01:29:00 on domain   1:    0.16202 elapsed seconds
+Timing for main: time 2017-08-25_01:29:30 on domain   1:    0.16177 elapsed seconds
+Timing for main: time 2017-08-25_01:30:00 on domain   1:    0.16085 elapsed seconds
+Timing for main: time 2017-08-25_01:30:30 on domain   1:    0.36880 elapsed seconds
+Timing for main: time 2017-08-25_01:31:00 on domain   1:    0.16210 elapsed seconds
+Timing for main: time 2017-08-25_01:31:30 on domain   1:    0.16255 elapsed seconds
+Timing for main: time 2017-08-25_01:32:00 on domain   1:    0.17028 elapsed seconds
+Timing for main: time 2017-08-25_01:32:30 on domain   1:    0.16253 elapsed seconds
+Timing for main: time 2017-08-25_01:33:00 on domain   1:    0.15833 elapsed seconds
+taskid: 0 hostname: dec2037</pre></div></div></article><article class='member queued' data-member='CU16_MP10_PBL02_URB2'><button type='button' class='member-btn' aria-expanded='false'><div class='member-top'><span class='chev' aria-hidden='true'>▸</span><span class='name'>CU16_MP10_PBL02_URB2</span><span class='ago-wrap'><span class='rel-ago' data-ts='2026-10-13T04:59:10-05:00'>—</span></span><span class='pill'>queued</span></div><div class='member-meta'><span class='num'>2/73</span><span class='pct'>3%</span></div><div class='bar'><i style='width:3%'></i></div><div class='member-times'><div><span class='k'>Sim</span> 2017-08-25_01:00:00</div><div><span class='k'>File</span> 2026-10-13 04:59:10 CDT</div></div><div class='tap-hint'>Tap for rsl.out.0000</div></button><div class='member-detail' hidden><div class='log-panel'><div class='log-head'>rsl.out.0000 · last 10 lines</div><div class='log-meta'>File last updated <strong>2026-10-13 04:59:42 CDT</strong> · <span class='rsl-ago' data-ts='2026-10-13T04:59:42-05:00'>—</span></div><pre class='log'>Timing for main: time 2017-08-25_01:11:00 on domain   1:    0.16257 elapsed seconds
+Timing for main: time 2017-08-25_01:11:30 on domain   1:    0.16314 elapsed seconds
+Timing for main: time 2017-08-25_01:12:00 on domain   1:    0.17168 elapsed seconds
+Timing for main: time 2017-08-25_01:12:30 on domain   1:    0.16295 elapsed seconds
+Timing for main: time 2017-08-25_01:13:00 on domain   1:    0.16322 elapsed seconds
+Timing for main: time 2017-08-25_01:13:30 on domain   1:    0.16327 elapsed seconds
+Timing for main: time 2017-08-25_01:14:00 on domain   1:    0.16293 elapsed seconds
+Timing for main: time 2017-08-25_01:14:30 on domain   1:    0.16040 elapsed seconds
+Timing for main: time 2017-08-25_01:15:00 on domain   1:    0.15896 elapsed seconds
+taskid: 0 hostname: dec0984</pre></div></div></article><article class='member queued' data-member='CU16_MP10_PBL02_URB2_LULC2001'><button type='button' class='member-btn' aria-expanded='false'><div class='member-top'><span class='chev' aria-hidden='true'>▸</span><span class='name'>CU16_MP10_PBL02_URB2_LULC2001</span><span class='ago-wrap'><span class='rel-ago' data-ts='2026-10-13T05:01:31-05:00'>—</span></span><span class='pill'>queued</span></div><div class='member-meta'><span class='num'>2/73</span><span class='pct'>3%</span></div><div class='bar'><i style='width:3%'></i></div><div class='member-times'><div><span class='k'>Sim</span> 2017-08-25_01:00:00</div><div><span class='k'>File</span> 2026-10-13 05:01:31 CDT</div></div><div class='tap-hint'>Tap for rsl.out.0000</div></button><div class='member-detail' hidden><div class='log-panel'><div class='log-head'>rsl.out.0000 · last 10 lines</div><div class='log-meta'>File last updated <strong>2026-10-13 05:02:02 CDT</strong> · <span class='rsl-ago' data-ts='2026-10-13T05:02:02-05:00'>—</span></div><pre class='log'>Timing for main: time 2017-08-25_01:11:00 on domain   1:    0.16203 elapsed seconds
+Timing for main: time 2017-08-25_01:11:30 on domain   1:    0.16187 elapsed seconds
+Timing for main: time 2017-08-25_01:12:00 on domain   1:    0.17135 elapsed seconds
+Timing for main: time 2017-08-25_01:12:30 on domain   1:    0.16247 elapsed seconds
+Timing for main: time 2017-08-25_01:13:00 on domain   1:    0.16282 elapsed seconds
+Timing for main: time 2017-08-25_01:13:30 on domain   1:    0.16277 elapsed seconds
+Timing for main: time 2017-08-25_01:14:00 on domain   1:    0.16258 elapsed seconds
+Timing for main: time 2017-08-25_01:14:30 on domain   1:    0.15951 elapsed seconds
+Timing for main: time 2017-08-25_01:15:00 on domain   1:    0.16038 elapsed seconds
+taskid: 0 hostname: dec1999</pre></div></div></article><article class='member complete' data-member='CU05_MP08_PBL01_URB2'><button type='button' class='member-btn' aria-expanded='false'><div class='member-top'><span class='chev' aria-hidden='true'>▸</span><span class='name'>CU05_MP08_PBL01_URB2</span><span class='ago-wrap'><span class='rel-ago' data-ts='2026-10-13T02:59:40-05:00'>—</span></span><span class='pill'>complete</span></div><div class='member-meta'><span class='num'>73/73</span><span class='pct'>100%</span></div><div class='bar'><i style='width:100%'></i></div><div class='member-times'><div><span class='k'>Sim</span> 2017-08-28_00:00:00</div><div><span class='k'>File</span> 2026-10-13 02:59:40 CDT</div></div><div class='tap-hint'>Tap for rsl.out.0000</div></button><div class='member-detail' hidden><div class='log-panel'><div class='log-head'>rsl.out.0000 · last 10 lines</div><div class='log-meta'>File last updated <strong>2026-10-13 03:00:07 CDT</strong> · <span class='rsl-ago' data-ts='2026-10-13T03:00:07-05:00'>—</span></div><pre class='log'>Timing for main: time 2017-08-27_23:57:30 on domain   1:    0.17088 elapsed seconds
+Timing for main: time 2017-08-27_23:58:00 on domain   1:    0.17003 elapsed seconds
+Timing for main: time 2017-08-27_23:58:30 on domain   1:    0.16988 elapsed seconds
+Timing for main: time 2017-08-27_23:59:00 on domain   1:    0.16969 elapsed seconds
+Timing for main: time 2017-08-27_23:59:30 on domain   1:    0.16862 elapsed seconds
+Timing for main: time 2017-08-28_00:00:00 on domain   1:    0.23502 elapsed seconds
+Timing for Writing wrfout_d01_2017-08-28_00:00:00 for domain        1:    4.92906 elapsed seconds
+Timing for Writing restart for domain        1:   27.28240 elapsed seconds
+d01 2017-08-28_00:00:00 wrf: SUCCESS COMPLETE WRF
+taskid: 0 hostname: dec1024</pre></div></div></article><article class='member complete' data-member='CU05_MP08_PBL01_URB2_LULC2001'><button type='button' class='member-btn' aria-expanded='false'><div class='member-top'><span class='chev' aria-hidden='true'>▸</span><span class='name'>CU05_MP08_PBL01_URB2_LULC2001</span><span class='ago-wrap'><span class='rel-ago' data-ts='2026-10-13T03:23:59-05:00'>—</span></span><span class='pill'>complete</span></div><div class='member-meta'><span class='num'>73/73</span><span class='pct'>100%</span></div><div class='bar'><i style='width:100%'></i></div><div class='member-times'><div><span class='k'>Sim</span> 2017-08-28_00:00:00</div><div><span class='k'>File</span> 2026-10-13 03:23:59 CDT</div></div><div class='tap-hint'>Tap for rsl.out.0000</div></button><div class='member-detail' hidden><div class='log-panel'><div class='log-head'>rsl.out.0000 · last 10 lines</div><div class='log-meta'>File last updated <strong>2026-10-13 03:24:27 CDT</strong> · <span class='rsl-ago' data-ts='2026-10-13T03:24:27-05:00'>—</span></div><pre class='log'>Timing for main: time 2017-08-27_23:57:30 on domain   1:    0.16889 elapsed seconds
+Timing for main: time 2017-08-27_23:58:00 on domain   1:    0.16827 elapsed seconds
+Timing for main: time 2017-08-27_23:58:30 on domain   1:    0.16842 elapsed seconds
+Timing for main: time 2017-08-27_23:59:00 on domain   1:    0.16767 elapsed seconds
+Timing for main: time 2017-08-27_23:59:30 on domain   1:    0.16811 elapsed seconds
+Timing for main: time 2017-08-28_00:00:00 on domain   1:    0.22173 elapsed seconds
+Timing for Writing wrfout_d01_2017-08-28_00:00:00 for domain        1:    4.93332 elapsed seconds
+Timing for Writing restart for domain        1:   27.34227 elapsed seconds
+d01 2017-08-28_00:00:00 wrf: SUCCESS COMPLETE WRF
+taskid: 0 hostname: dec2040</pre></div></div></article><article class='member complete' data-member='CU06_MP08_PBL01_URB2'><button type='button' class='member-btn' aria-expanded='false'><div class='member-top'><span class='chev' aria-hidden='true'>▸</span><span class='name'>CU06_MP08_PBL01_URB2</span><span class='ago-wrap'><span class='rel-ago' data-ts='2026-10-13T03:29:07-05:00'>—</span></span><span class='pill'>complete</span></div><div class='member-meta'><span class='num'>73/73</span><span class='pct'>100%</span></div><div class='bar'><i style='width:100%'></i></div><div class='member-times'><div><span class='k'>Sim</span> 2017-08-28_00:00:00</div><div><span class='k'>File</span> 2026-10-13 03:29:07 CDT</div></div><div class='tap-hint'>Tap for rsl.out.0000</div></button><div class='member-detail' hidden><div class='log-panel'><div class='log-head'>rsl.out.0000 · last 10 lines</div><div class='log-meta'>File last updated <strong>2026-10-13 03:29:33 CDT</strong> · <span class='rsl-ago' data-ts='2026-10-13T03:29:33-05:00'>—</span></div><pre class='log'>Timing for main: time 2017-08-27_23:57:30 on domain   1:    0.17302 elapsed seconds
+Timing for main: time 2017-08-27_23:58:00 on domain   1:    0.17391 elapsed seconds
+Timing for main: time 2017-08-27_23:58:30 on domain   1:    0.17310 elapsed seconds
+Timing for main: time 2017-08-27_23:59:00 on domain   1:    0.17307 elapsed seconds
+Timing for main: time 2017-08-27_23:59:30 on domain   1:    0.17426 elapsed seconds
+Timing for main: time 2017-08-28_00:00:00 on domain   1:    0.19921 elapsed seconds
+Timing for Writing wrfout_d01_2017-08-28_00:00:00 for domain        1:    4.93447 elapsed seconds
+Timing for Writing restart for domain        1:   25.63225 elapsed seconds
+d01 2017-08-28_00:00:00 wrf: SUCCESS COMPLETE WRF
+taskid: 0 hostname: dec1018</pre></div></div></article><article class='member complete' data-member='CU06_MP08_PBL01_URB2_LULC2001'><button type='button' class='member-btn' aria-expanded='false'><div class='member-top'><span class='chev' aria-hidden='true'>▸</span><span class='name'>CU06_MP08_PBL01_URB2_LULC2001</span><span class='ago-wrap'><span class='rel-ago' data-ts='2026-10-13T03:30:49-05:00'>—</span></span><span class='pill'>complete</span></div><div class='member-meta'><span class='num'>73/73</span><span class='pct'>100%</span></div><div class='bar'><i style='width:100%'></i></div><div class='member-times'><div><span class='k'>Sim</span> 2017-08-28_00:00:00</div><div><span class='k'>File</span> 2026-10-13 03:30:49 CDT</div></div><div class='tap-hint'>Tap for rsl.out.0000</div></button><div class='member-detail' hidden><div class='log-panel'><div class='log-head'>rsl.out.0000 · last 10 lines</div><div class='log-meta'>File last updated <strong>2026-10-13 03:31:15 CDT</strong> · <span class='rsl-ago' data-ts='2026-10-13T03:31:15-05:00'>—</span></div><pre class='log'>Timing for main: time 2017-08-27_23:57:30 on domain   1:    0.17380 elapsed seconds
+Timing for main: time 2017-08-27_23:58:00 on domain   1:    0.17358 elapsed seconds
+Timing for main: time 2017-08-27_23:58:30 on domain   1:    0.17486 elapsed seconds
+Timing for main: time 2017-08-27_23:59:00 on domain   1:    0.17470 elapsed seconds
+Timing for main: time 2017-08-27_23:59:30 on domain   1:    0.17360 elapsed seconds
+Timing for main: time 2017-08-28_00:00:00 on domain   1:    0.19461 elapsed seconds
+Timing for Writing wrfout_d01_2017-08-28_00:00:00 for domain        1:    4.97096 elapsed seconds
+Timing for Writing restart for domain        1:   25.77743 elapsed seconds
+d01 2017-08-28_00:00:00 wrf: SUCCESS COMPLETE WRF
+taskid: 0 hostname: dec1002</pre></div></div></article>
+</section>
+<footer>
+  Expected ~73 hourly files (2017-08-25 00 → 2017-08-28 00 UTC).
+  Tap a member for the last 10 lines of rsl.out.0000.
+</footer>
+</div>
+<script>
+(function () {
+  function scrollLogToEnd(detail) {
+    var log = detail.querySelector('pre.log');
+    if (!log) return;
+    requestAnimationFrame(function () {
+      log.scrollTop = log.scrollHeight;
+    });
+  }
+  function toggle(article) {
+    var btn = article.querySelector('.member-btn');
+    var detail = article.querySelector('.member-detail');
+    if (!btn || !detail) return;
+    var open = article.classList.toggle('open');
+    detail.hidden = !open;
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    if (open) scrollLogToEnd(detail);
+  }
+  document.querySelectorAll('article.member').forEach(function (article) {
+    var btn = article.querySelector('.member-btn');
+    if (!btn) return;
+    btn.addEventListener('click', function () { toggle(article); });
+  });
+
+  function relativeParts(sec) {
+    if (sec < 5) return 'just now';
+    if (sec < 60) return sec + 's ago';
+    var m = Math.floor(sec / 60);
+    if (m < 60) return m + 'm ago';
+    var h = Math.floor(m / 60);
+    var rm = m % 60;
+    if (h < 24) return rm ? (h + 'h ' + rm + 'm ago') : (h + 'h ago');
+    var d = Math.floor(h / 24);
+    var rh = h % 24;
+    if (d < 14) return rh ? (d + 'd ' + rh + 'h ago') : (d + 'd ago');
+    return d + 'd ago';
+  }
+  function tickAllAgo() {
+    var page = document.getElementById('ago');
+    if (page) {
+      var pts = Date.parse(page.getAttribute('data-ts') || '');
+      if (pts) {
+        var psec = Math.max(0, Math.floor((Date.now() - pts) / 1000));
+        page.textContent = 'Updated · ' + relativeParts(psec);
+      }
+    }
+    document.querySelectorAll('.rsl-ago, .rel-ago').forEach(function (el) {
+      var ts = Date.parse(el.getAttribute('data-ts') || '');
+      if (!ts) return;
+      var sec = Math.max(0, Math.floor((Date.now() - ts) / 1000));
+      el.textContent = relativeParts(sec);
+    });
+  }
+  tickAllAgo();
+  setInterval(tickAllAgo, 1000);
+})();
+</script>
+</body>
+</html>
