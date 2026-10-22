@@ -1,11 +1,11 @@
 {
-  "generated_cst": "2026-10-22 03:12:34 CDT",
-  "generated_iso": "2026-10-22T02:12:34-06:00",
+  "generated_cst": "2026-10-22 03:14:39 CDT",
+  "generated_iso": "2026-10-22T02:14:39-06:00",
   "summary": {
     "complete": 4,
     "running": 0,
-    "queued": 28,
-    "partial": 0,
+    "queued": 26,
+    "partial": 2,
     "pending": 0,
     "done_short": 0,
     "total": 32
@@ -20,7 +20,7 @@
       "latest_wrfout": "2017-08-28_00:00:00",
       "latest_wrfout_created_cst": "2026-10-13 02:59:40 CDT",
       "latest_wrfout_created_iso": "2026-10-13T02:59:40-05:00",
-      "queue_state": "Q",
+      "queue_state": null,
       "job_name": "H1_05M08P01U2",
       "rsl_available": true,
       "rsl_tail": [
@@ -47,7 +47,7 @@
       "latest_wrfout": "2017-08-28_00:00:00",
       "latest_wrfout_created_cst": "2026-10-13 03:23:59 CDT",
       "latest_wrfout_created_iso": "2026-10-13T03:23:59-05:00",
-      "queue_state": "Q",
+      "queue_state": null,
       "job_name": "H1_05M08P01U2L2",
       "rsl_available": true,
       "rsl_tail": [
@@ -67,57 +67,57 @@
     },
     {
       "member": "CU05_MP08_PBL02_URB2",
-      "status": "queued",
+      "status": "partial",
       "wrfout_count": 29,
       "expected": 73,
       "pct": 40,
       "latest_wrfout": "2017-08-26_04:00:00",
       "latest_wrfout_created_cst": "2026-10-13 02:42:19 CDT",
       "latest_wrfout_created_iso": "2026-10-13T02:42:19-05:00",
-      "queue_state": "Q",
+      "queue_state": null,
       "job_name": "H1_05M08P02U2",
       "rsl_available": true,
       "rsl_tail": [
-        "Timing for main: time 2017-08-26_04:51:00 on domain   1:    0.16954 elapsed seconds",
-        "Timing for main: time 2017-08-26_04:51:30 on domain   1:    0.16916 elapsed seconds",
-        "Timing for main: time 2017-08-26_04:52:00 on domain   1:    0.19081 elapsed seconds",
-        "Timing for main: time 2017-08-26_04:52:30 on domain   1:    0.17031 elapsed seconds",
-        "Timing for main: time 2017-08-26_04:53:00 on domain   1:    0.16937 elapsed seconds",
-        "Timing for main: time 2017-08-26_04:53:30 on domain   1:    0.16976 elapsed seconds",
-        "Timing for main: time 2017-08-26_04:54:00 on domain   1:    0.16965 elapsed seconds",
-        "Timing for main: time 2017-08-26_04:54:30 on domain   1:    0.16914 elapsed seconds",
-        "Timing for main: time 2017-08-26_04:55:00 on domain   1:    0.16999 elapsed seconds",
-        "taskid: 0 hostname: dec2029"
+        " ips,ipe,jps,jpe            1          37           1          16",
+        " *************************************",
+        "DYNAMICS OPTION: Eulerian Mass Coordinate",
+        "   alloc_space_field: domain            1 ,               72514084  bytes allocated",
+        " RESTART run: opening wrfrst_d01_2017-08-25_00:00:00 for reading",
+        "-------------- FATAL CALLED ---------------",
+        "FATAL CALLED FROM FILE:  <stdin>  LINE:     242",
+        "program wrf: error opening   wrfrst_d01_2017-08-25_00:00:00 for reading",
+        "-------------------------------------------",
+        "taskid: 0 hostname: dec0609"
       ],
-      "rsl_mtime_cst": "2026-10-13 14:15:34 CDT",
-      "rsl_mtime_iso": "2026-10-13T14:15:34-05:00"
+      "rsl_mtime_cst": "2026-10-22 03:14:21 CDT",
+      "rsl_mtime_iso": "2026-10-22T03:14:21-05:00"
     },
     {
       "member": "CU05_MP08_PBL02_URB2_LULC2001",
-      "status": "queued",
+      "status": "partial",
       "wrfout_count": 31,
       "expected": 73,
       "pct": 42,
       "latest_wrfout": "2017-08-26_06:00:00",
       "latest_wrfout_created_cst": "2026-10-13 02:44:26 CDT",
       "latest_wrfout_created_iso": "2026-10-13T02:44:26-05:00",
-      "queue_state": "Q",
+      "queue_state": null,
       "job_name": "H1_05M08P02U2L2",
       "rsl_available": true,
       "rsl_tail": [
-        "Timing for main: time 2017-08-26_06:07:00 on domain   1:    0.17049 elapsed seconds",
-        "Timing for main: time 2017-08-26_06:07:30 on domain   1:    0.16923 elapsed seconds",
-        "Timing for main: time 2017-08-26_06:08:00 on domain   1:    0.19150 elapsed seconds",
-        "Timing for main: time 2017-08-26_06:08:30 on domain   1:    0.16984 elapsed seconds",
-        "Timing for main: time 2017-08-26_06:09:00 on domain   1:    0.16885 elapsed seconds",
-        "Timing for main: time 2017-08-26_06:09:30 on domain   1:    0.16990 elapsed seconds",
-        "Timing for main: time 2017-08-26_06:10:00 on domain   1:    0.16972 elapsed seconds",
-        "Timing for main: time 2017-08-26_06:10:30 on domain   1:    0.38357 elapsed seconds",
-        "Timing for main: time 2017-08-26_06:11:00 on domain   1:    0.17557 elapsed seconds",
-        "taskid: 0 hostname: dec0994"
+        " ips,ipe,jps,jpe            1          37           1          16",
+        " *************************************",
+        "DYNAMICS OPTION: Eulerian Mass Coordinate",
+        "   alloc_space_field: domain            1 ,               72514084  bytes allocated",
+        " RESTART run: opening wrfrst_d01_2017-08-25_00:00:00 for reading",
+        "-------------- FATAL CALLED ---------------",
+        "FATAL CALLED FROM FILE:  <stdin>  LINE:     242",
+        "program wrf: error opening   wrfrst_d01_2017-08-25_00:00:00 for reading",
+        "-------------------------------------------",
+        "taskid: 0 hostname: dec1545"
       ],
-      "rsl_mtime_cst": "2026-10-13 14:15:29 CDT",
-      "rsl_mtime_iso": "2026-10-13T14:15:29-05:00"
+      "rsl_mtime_cst": "2026-10-22 03:14:24 CDT",
+      "rsl_mtime_iso": "2026-10-22T03:14:24-05:00"
     },
     {
       "member": "CU05_MP10_PBL01_URB2",
@@ -131,20 +131,9 @@
       "queue_state": "Q",
       "job_name": "H1_05M10P01U2",
       "rsl_available": true,
-      "rsl_tail": [
-        "Timing for Writing wrfout_d01_2017-08-26_12:00:00 for domain        1:    5.28527 elapsed seconds",
-        "Timing for Writing restart for domain        1:   26.75826 elapsed seconds",
-        "d01 2017-08-26_12:00:00  Input data is acceptable to use: wrfbdy_d01",
-        "Timing for processing lateral boundary for domain        1:    0.40466 elapsed seconds",
-        "Timing for main: time 2017-08-26_12:00:30 on domain   1:   33.21099 elapsed seconds",
-        "Timing for main: time 2017-08-26_12:01:00 on domain   1:    0.16645 elapsed seconds",
-        "Timing for main: time 2017-08-26_12:01:30 on domain   1:    0.16837 elapsed seconds",
-        "Timing for main: time 2017-08-26_12:02:00 on domain   1:    0.16773 elapsed seconds",
-        "Timing for main: time 2017-08-26_12:02:30 on domain   1:    0.16657 elapsed seconds",
-        "taskid: 0 hostname: dec0971"
-      ],
-      "rsl_mtime_cst": "2026-10-13 02:49:54 CDT",
-      "rsl_mtime_iso": "2026-10-13T02:49:54-05:00"
+      "rsl_tail": [],
+      "rsl_mtime_cst": "2026-10-22 03:14:39 CDT",
+      "rsl_mtime_iso": "2026-10-22T03:14:39-05:00"
     },
     {
       "member": "CU05_MP10_PBL01_URB2_LULC2001",
@@ -157,21 +146,10 @@
       "latest_wrfout_created_iso": "2026-10-13T02:48:36-05:00",
       "queue_state": "Q",
       "job_name": "H1_05M10P01U2L2",
-      "rsl_available": true,
-      "rsl_tail": [
-        "Timing for main: time 2017-08-26_11:11:00 on domain   1:    0.16519 elapsed seconds",
-        "Timing for main: time 2017-08-26_11:11:30 on domain   1:    0.16334 elapsed seconds",
-        "Timing for main: time 2017-08-26_11:12:00 on domain   1:    0.18248 elapsed seconds",
-        "Timing for main: time 2017-08-26_11:12:30 on domain   1:    0.16422 elapsed seconds",
-        "Timing for main: time 2017-08-26_11:13:00 on domain   1:    0.16409 elapsed seconds",
-        "Timing for main: time 2017-08-26_11:13:30 on domain   1:    0.16350 elapsed seconds",
-        "Timing for main: time 2017-08-26_11:14:00 on domain   1:    0.16391 elapsed seconds",
-        "Timing for main: time 2017-08-26_11:14:30 on domain   1:    0.16299 elapsed seconds",
-        "Timing for main: time 2017-08-26_11:15:00 on domain   1:    0.16444 elapsed seconds",
-        "taskid: 0 hostname: dec1022"
-      ],
-      "rsl_mtime_cst": "2026-10-13 02:49:09 CDT",
-      "rsl_mtime_iso": "2026-10-13T02:49:09-05:00"
+      "rsl_available": false,
+      "rsl_tail": [],
+      "rsl_mtime_cst": null,
+      "rsl_mtime_iso": null
     },
     {
       "member": "CU05_MP10_PBL02_URB2",
