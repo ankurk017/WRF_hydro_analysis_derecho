@@ -1,11 +1,11 @@
 {
-  "generated_cst": "2026-10-27 00:11:44 CDT",
-  "generated_iso": "2026-10-26T23:11:44-06:00",
+  "generated_cst": "2026-10-27 00:14:27 CDT",
+  "generated_iso": "2026-10-26T23:14:27-06:00",
   "summary": {
     "complete": 4,
-    "running": 4,
+    "running": 0,
     "queued": 0,
-    "partial": 24,
+    "partial": 28,
     "pending": 0,
     "done_short": 0,
     "total": 32
@@ -20,7 +20,7 @@
       "latest_wrfout": "2017-08-28_00:00:00",
       "latest_wrfout_created_cst": "2026-10-26 23:42:53 CDT",
       "latest_wrfout_created_iso": "2026-10-26T23:42:53-05:00",
-      "queue_state": "R",
+      "queue_state": null,
       "job_name": "H1_05M08P01U2",
       "rsl_available": true,
       "rsl_tail": [
@@ -47,7 +47,7 @@
       "latest_wrfout": "2017-08-28_00:00:00",
       "latest_wrfout_created_cst": "2026-10-26 23:44:50 CDT",
       "latest_wrfout_created_iso": "2026-10-26T23:44:50-05:00",
-      "queue_state": "R",
+      "queue_state": null,
       "job_name": "H1_05M08P01U2L2",
       "rsl_available": true,
       "rsl_tail": [
@@ -67,14 +67,14 @@
     },
     {
       "member": "CU05_MP08_PBL02_URB2",
-      "status": "running",
+      "status": "partial",
       "wrfout_count": 29,
       "expected": 73,
       "pct": 40,
       "latest_wrfout": "2017-08-26_04:00:00",
       "latest_wrfout_created_cst": "2026-10-26 23:05:28 CDT",
       "latest_wrfout_created_iso": "2026-10-26T23:05:28-05:00",
-      "queue_state": "R",
+      "queue_state": null,
       "job_name": "H1_05M08P02U2",
       "rsl_available": true,
       "rsl_tail": [
@@ -94,14 +94,14 @@
     },
     {
       "member": "CU05_MP08_PBL02_URB2_LULC2001",
-      "status": "running",
+      "status": "partial",
       "wrfout_count": 31,
       "expected": 73,
       "pct": 42,
       "latest_wrfout": "2017-08-26_06:00:00",
       "latest_wrfout_created_cst": "2026-10-26 23:07:26 CDT",
       "latest_wrfout_created_iso": "2026-10-26T23:07:26-05:00",
-      "queue_state": "R",
+      "queue_state": null,
       "job_name": "H1_05M08P02U2L2",
       "rsl_available": true,
       "rsl_tail": [
@@ -236,7 +236,7 @@
       "latest_wrfout": "2017-08-28_00:00:00",
       "latest_wrfout_created_cst": "2026-10-26 23:46:30 CDT",
       "latest_wrfout_created_iso": "2026-10-26T23:46:30-05:00",
-      "queue_state": "R",
+      "queue_state": null,
       "job_name": "H1_06M08P01U2",
       "rsl_available": true,
       "rsl_tail": [
@@ -263,7 +263,7 @@
       "latest_wrfout": "2017-08-28_00:00:00",
       "latest_wrfout_created_cst": "2026-10-26 23:46:27 CDT",
       "latest_wrfout_created_iso": "2026-10-26T23:46:27-05:00",
-      "queue_state": "R",
+      "queue_state": null,
       "job_name": "H1_06M08P01U2L2",
       "rsl_available": true,
       "rsl_tail": [
@@ -283,14 +283,14 @@
     },
     {
       "member": "CU06_MP08_PBL02_URB2",
-      "status": "running",
+      "status": "partial",
       "wrfout_count": 27,
       "expected": 73,
       "pct": 37,
       "latest_wrfout": "2017-08-26_02:00:00",
       "latest_wrfout_created_cst": "2026-10-26 23:03:17 CDT",
       "latest_wrfout_created_iso": "2026-10-26T23:03:17-05:00",
-      "queue_state": "R",
+      "queue_state": null,
       "job_name": "H1_06M08P02U2",
       "rsl_available": true,
       "rsl_tail": [
@@ -310,14 +310,14 @@
     },
     {
       "member": "CU06_MP08_PBL02_URB2_LULC2001",
-      "status": "running",
+      "status": "partial",
       "wrfout_count": 14,
       "expected": 73,
       "pct": 19,
       "latest_wrfout": "2017-08-25_13:00:00",
       "latest_wrfout_created_cst": "2026-10-26 22:50:35 CDT",
       "latest_wrfout_created_iso": "2026-10-26T22:50:35-05:00",
-      "queue_state": "R",
+      "queue_state": null,
       "job_name": "H1_06M08P02U2L2",
       "rsl_available": true,
       "rsl_tail": [
