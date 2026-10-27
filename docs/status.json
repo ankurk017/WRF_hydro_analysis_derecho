@@ -1,6 +1,6 @@
 {
-  "generated_cst": "2026-10-26 22:32:39 CDT",
-  "generated_iso": "2026-10-26T21:32:39-06:00",
+  "generated_cst": "2026-10-26 22:34:44 CDT",
+  "generated_iso": "2026-10-26T21:34:44-06:00",
   "summary": {
     "complete": 0,
     "running": 0,
@@ -22,10 +22,21 @@
       "latest_wrfout_created_iso": null,
       "queue_state": "Q",
       "job_name": "H1_05M08P01U2",
-      "rsl_available": false,
-      "rsl_tail": [],
-      "rsl_mtime_cst": null,
-      "rsl_mtime_iso": null
+      "rsl_available": true,
+      "rsl_tail": [
+        "d01 2017-08-27_06:00:00 Timing for loop #   10 =          2 s.",
+        "  ",
+        " -----------------------------------------------------------------------------",
+        "  ",
+        " Domain  1: Current date being processed: 2017-08-27_12:00:00.0000, which is loop #  11 out of   13",
+        " configflags%julyr, %julday, %gmt:        2017         239   12.00000    ",
+        "d01 2017-08-27_12:00:00  Yes, this special data is acceptable to use: OUTPUT FROM METGRID V4.6.0",
+        "d01 2017-08-27_12:00:00  Input data is acceptable to use: met_em.d01.2017-08-27_12:00:00.nc",
+        " metgrid input_wrf.F first_date_input = 2017-08-27_12:00:00",
+        " metgrid input_wrf.F first_date_nml = 2017-08-25_00:00:00"
+      ],
+      "rsl_mtime_cst": "2026-10-26 22:34:43 CDT",
+      "rsl_mtime_iso": "2026-10-26T22:34:43-05:00"
     },
     {
       "member": "CU05_MP08_PBL01_URB2_LULC2001",
